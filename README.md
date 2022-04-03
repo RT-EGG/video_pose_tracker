@@ -29,7 +29,7 @@ Python 3.10 (develop by 3.10.2)
     - arguments:
     1. input video filepath 
 
--convert_chromakey.bat
+- convert_chromakey.bat
     - Export movie that chromakey compositing with any background image.
     - arguments:
     1. input video filepath
