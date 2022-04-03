@@ -16,6 +16,7 @@ Python 3.10 (develop by 3.10.2)
 
 ## Getting started
 ### Windows
+1. Install python (required version written in [Requirement](#requirement))
 1. Run install.bat.
 1. Run bat with argument as input video filepath.
 
@@ -39,3 +40,4 @@ Python 3.10 (develop by 3.10.2)
 
 ## TODO
 - [ ] Interactive GUI convert tool.
+- [ ] Release exe.
