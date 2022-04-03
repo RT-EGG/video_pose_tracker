@@ -1,6 +1,7 @@
 import os
 from abc import abstractmethod
 
+import sys
 import cv2
 import mediapipe
 import moviepy.editor as movie_editor
@@ -21,9 +22,9 @@ class VideoConverter:
 
         print('initialize model instance.')
         self.pose = self.mp_pose.Pose(
-            static_image_mode=True,
+            static_image_mode=False,
             model_complexity=2,
-            enable_segmentation=False,
+            enable_segmentation=self._do_enable_segmentation(),
             min_detection_confidence=0.5
         )
 
@@ -40,7 +41,10 @@ class VideoConverter:
             _, frame = self.video.read()            
 
             tracked_pose = self.pose.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-            new_frame = self._convert_image(frame, tracked_pose.pose_landmarks)
+            if self._do_enable_segmentation():
+                new_frame = self._convert_image(frame, tracked_pose.segmentation_mask)
+            else:
+                new_frame = self._convert_image(frame, tracked_pose.pose_landmarks)
 
             new_frames.append(new_frame)
 
@@ -85,6 +89,10 @@ class VideoConverter:
     @abstractmethod
     def _convert_image(self, in_image, in_landmarks):
         return in_image.copy()
+
+    @abstractmethod
+    def _do_enable_segmentation(self):
+        return False
     
 class VideoPoseConverter(VideoConverter):
     def __init__(self, in_video):
@@ -119,3 +127,19 @@ class VideoOverlayConverter(VideoConverter):
             )
 
         return image
+
+class VideoSegmentationConverter(VideoConverter):
+    def __init__(self, in_input_filepath, in_background_image):
+        super().__init__(in_input_filepath)
+
+        self.background_image = in_background_image
+
+    def _convert_image(self, in_image, in_segmentation_mask):
+        if not np.all(in_image.shape == self.background_image.shape):
+            raise RuntimeError('Dimensions of images between video and background must be same.')
+
+        condition = np.stack((in_segmentation_mask,) * 3, axis=-1) < 0.1
+        return np.where(condition, in_image, self.background_image)
+
+    def _do_enable_segmentation(self):
+        return True
