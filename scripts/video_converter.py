@@ -111,6 +111,9 @@ class VideoPoseConverter(VideoConverter):
 
         return tracked
 
+    def _do_enable_segmentation(self):
+        return super()._do_enable_segmentation()
+
 class VideoOverlayConverter(VideoConverter):
     def __init__(self, in_video):
         super().__init__(in_video)
@@ -128,6 +131,9 @@ class VideoOverlayConverter(VideoConverter):
 
         return image
 
+    def _do_enable_segmentation(self):
+        return super()._do_enable_segmentation()
+
 class VideoSegmentationConverter(VideoConverter):
     def __init__(self, in_input_filepath, in_background_image):
         super().__init__(in_input_filepath)
@@ -135,11 +141,13 @@ class VideoSegmentationConverter(VideoConverter):
         self.background_image = in_background_image
 
     def _convert_image(self, in_image, in_segmentation_mask):
-        if not np.all(in_image.shape == self.background_image.shape):
-            raise RuntimeError('Dimensions of images between video and background must be same.')
+        if in_segmentation_mask is not None:
+            if not np.all(in_image.shape == self.background_image.shape):
+                raise RuntimeError('Dimensions of images between video and background must be same.')
 
-        condition = np.stack((in_segmentation_mask,) * 3, axis=-1) < 0.1
-        return np.where(condition, in_image, self.background_image)
+            condition = np.stack((in_segmentation_mask,) * 3, axis=-1) < 0.1
+            return np.where(condition, in_image, self.background_image)
+        return in_image.copy()
 
     def _do_enable_segmentation(self):
         return True
